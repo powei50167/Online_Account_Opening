@@ -1,0 +1,340 @@
+body {
+  background-color: #1e1e2f;
+  color: #f0f0f0;
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  padding: 20px;
+}
+
+h2 {
+  color: #ffffff;
+  margin-bottom: 20px;
+}
+
+.action-buttons {
+  background-color: #2b2b3d;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  font-size: 18px;
+  display: flex;
+  justify-content: flex-end; /* ✅ 這行讓按鈕靠右 */
+  gap: 10px; /* 按鈕之間有間距 */
+}
+
+/* 把第一顆 <button> 往右推，後面的按鈕會一同沿著它移動 */
+.action-buttons button:first-of-type {
+  margin-left: auto;
+}
+
+.filter-section {
+  background-color: #2b2b3d;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  font-size: 18px;
+}
+
+.filter-section label {
+  margin-right: 20px;
+  font-size: 18px;
+}
+
+select, input[type="date"] {
+  background-color: #a447f0;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 18px;
+}
+
+
+select:focus, input[type="date"]:focus {
+  outline: none;
+  box-shadow: 0 0 5px #4caf50;
+}
+
+button {
+  background-color: #a447f0;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-size: 16px;
+}
+
+button:hover {
+  background-color: #45a045;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #2b2b3d;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 0 10px rgba(0,0,0,0.4);
+}
+
+th, td {
+  padding: 12px;
+  text-align: center;
+  border-bottom: 1px solid #444;
+  font-size: 18px;
+}
+
+th {
+  background-color: #3c3c51;
+  color: #ffffff;
+}
+
+tr:hover {
+  background-color: #383858;
+}
+
+
+tr.selected {
+  background-color: #5a70ec !important;
+  color: white;
+}
+
+.date-warm-good {
+  color: #06db46;
+  font-weight: bold;
+}
+
+.date-warm-warning {
+  color: #beec18;
+  font-weight: bold;
+}
+
+.date-warm-alert {
+  color: #b71c1c;
+  font-weight: bold;
+}
+
+.date-warm-dead {
+  color: #cebebee1;
+  font-weight: bold;
+}
+
+.date-warm-normal {
+  background-color: transparent;
+}
+
+
+.status-icon-search {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1em;
+  padding: 4px;
+}
+
+.status-icon-search:hover {
+  background-color: #f0f0f0;
+  border-radius: 4px;
+}
+
+/* Modal 遮罩背景 */
+.modal {
+  display: none; /* 預設隱藏 */
+  position: fixed;
+  z-index: 999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.6); /* 更深的半透明黑色遮罩提高對比 */
+  backdrop-filter: blur(2px); /* 背景模糊效果 */
+}
+
+/* Modal 彈出框本體 */
+.modal-content {
+  background-color: #2b2b3d; /* 與其他區塊背景一致 */
+  margin: 15% auto;
+  padding: 25px;
+  border-radius: 12px;
+  width: 350px; /* 略寬一點提供更好的內容排版空間 */
+  text-align: left; /* 左對齊更符合表單樣式 */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 2px rgba(255, 255, 255, 0.1);
+  animation: fadeIn 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1); /* 微妙的邊框 */
+}
+
+/* Modal 標題 */
+.modal-content h3 {
+  color: #ffffff;
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 10px;
+}
+
+/* 輸入框樣式 */
+.modal-content input {
+  width: 100%;
+  background-color: #3c3c51;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px;
+  margin-top: 8px;
+  margin-bottom: 20px;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+.modal-content input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(164, 71, 240, 0.5); /* 紫色對焦效果匹配按鈕顏色 */
+}
+
+/* 按鈕容器 */
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+
+
+/* 確認按鈕 */
+.confirm-button {
+  background-color: #a447f0; /* 保持與主要按鈕一致的紫色 */
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
+
+.confirm-button:hover {
+  background-color: #b85ff9;
+  transform: translateY(-2px);
+}
+
+/* 取消按鈕 */
+.cancel-button {
+  background-color: transparent;
+  color: #f0f0f0;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
+
+.cancel-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* 動畫效果 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* 關閉按鈕 (X) */
+.close-modal {
+  position: absolute;
+  right: 15px;
+  top: 10px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.close-modal:hover {
+  color: #ffffff;
+}
+
+/* 指派 Modal 內的下拉選單樣式（風格與日期選單一致） */
+.modal-content select {
+  width: 100%;
+  background-color: #3c3c51;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px;
+  margin-top: 8px;
+  margin-bottom: 20px;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+.modal-content select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(164, 71, 240, 0.5); /* 紫色聚焦效果 */
+}
+
+/* 標籤統一風格 */
+.modal-content label {
+  display: block;
+  font-size: 16px;
+  font-weight: 500;
+  color: #cccccc;
+  margin-bottom: 5px;
+}
+
+.modal-content textarea {
+  width: 100%;
+  border: none;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 16px;
+  box-sizing: border-box;
+  resize: vertical;
+  margin-top: 8px;
+  margin-bottom: 20px;
+}
+
+.email-section {
+  margin-bottom: 25px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#emailBody {
+  color: #000000 !important;
+}
+
+#caseTable th,
+#caseTable td {
+  text-align: center;
+}
+
+/* 只影響寄信彈窗 */
+#mailsendModal .modal-content {
+  margin: 5% auto;      /* 垂直間距改小，貼近上方 */
+  /* margin-top: 5%;    也可以只寫 margin-top */
+}
+
+.dataTables_wrapper .dataTables_length select {
+  background-color: #1e1e2f !important;  /* 您想要的背景色 */
+  color: #cccccc !important;               /* 如果需要，也可以改文字色 */
+}
+
+#feedback {
+  font-size: 24px;
+  font-weight: bold; 
+}

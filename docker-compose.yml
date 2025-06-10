@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+  api:
+    build: .
+    container_name: online-account-api
+    ports:
+      - "8086:8086"
+    env_file:
+      - .env
+    depends_on:
+      - db
+    volumes:
+      - ./src/online_account_opening/frontend/static:/app/frontend/static
+      - ./src:/app/src
+      
+    command: >
+      sh -c "PYTHONPATH=src uvicorn online_account_opening.main:app --host 0.0.0.0 --port 8086 --reload"
+
+  db:
+    image: mysql:8.0
+    container_name: online-account-db
+    restart: unless-stopped
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: account_db
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: apppass
+    volumes:
+      - dbdata:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+
+volumes:
+  dbdata:

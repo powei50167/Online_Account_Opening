@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>線上開戶追蹤名單</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+</head>
+
+<body>
+  <!-- 信件回覆紀錄視窗 -->
+    <div id="mailTrackingModal" class="modal">
+      <div class="modal-content" style="max-width: 800px; width: 90%;">
+        <span class="close-modal" onclick="closeMailTrackingModal()">&times;</span>
+        <h3>📬 回覆紀錄</h3>
+        <div id="mailTrackingTableContainer"></div>
+      </div>
+    </div>
+
+  <!-- 指派視窗（彈跳視窗形式） -->
+  <div id="assignModal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" onclick="closeAssignModal()">&times;</span>
+      <h3>指派營業員</h3>
+
+      <div class="email-section">
+        <label>
+          員編快速查找：
+          <input type="text" id="idSearchInput" placeholder="輸入員工編號後按 Enter">
+        </label>
+
+        <div style="display: flex; gap: 10px;">
+          <label style="flex: 1;">
+            部門：
+            <select id="deptSelect">
+              <option value="">請選擇部門</option>
+            </select>
+          </label>
+
+          <label style="flex: 1;">
+            姓名：
+            <select id="nameSelect">
+              <option value="">請選擇姓名</option>
+            </select>
+          </label>
+        </div>
+
+        <label>
+          收件者 Email：
+          <input type="email" id="Recipient" placeholder="將自動帶入所選員工的信箱(可直接修改)">
+        </label>
+      </div>
+
+      <!-- 隱藏欄位：綁定到原本 salesInput 給後端 -->
+      <input type="hidden" id="salesInput">
+
+      <div class="modal-buttons">
+        <button class="cancel-button" onclick="closeAssignModal()">取消</button>
+        <button class="confirm-button" onclick="confirmAssign()">確定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 寄信視窗（彈跳視窗形式） -->
+  <div id="mailsendModal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" onclick="closeEmailModal()">&times;</span>
+      <h3>寄送信件</h3>
+
+      <!-- 區塊 1：搜尋與收件資訊 -->
+      <div class="email-section">
+        <label>
+          員編快速查找：
+          <input type="text" id="emailIdSearchInput" placeholder="輸入員工編號後按 Enter">
+        </label>
+
+        <div style="display: flex; gap: 10px;">
+          <label style="flex: 1;">
+            部門：
+            <select id="emailDeptSelect">
+              <option value="">請選擇部門</option>
+            </select>
+          </label>
+
+          <label style="flex: 1;">
+            姓名：
+            <select id="emailNameSelect">
+              <option value="">請選擇姓名</option>
+            </select>
+          </label>
+        </div>
+
+        <label>
+          收件者 Email：
+          <input type="email" id="emailRecipient" placeholder="將自動帶入所選員工的信箱(可直接修改)">
+        </label>
+      </div>
+
+      <!-- 區塊 2：信件內容 -->
+      <div class="email-section">
+        <label>
+          主旨與內文選擇：
+          <select id="emailTypeSelect">
+            <option value="">請選擇類型</option>
+            <option value="0">其他</option>
+            <option value="1">補件提醒</option>
+            <option value="2">未完成件提醒</option>
+            <option value="3">自來客_指派AE</option>
+            <option value="4">自來客_轉原AE</option>
+          </select>
+        </label>
+
+        <label>主旨：
+          <input type="text" id="emailSubject" placeholder="將自動帶入信件主旨(可直接修改)">
+        </label>
+
+        <label>內文：
+          <textarea id="emailBody" rows="5" placeholder="將自動帶入信件內容(可直接修改)"></textarea>
+        </label>
+      </div>
+
+      <div class="modal-buttons">
+        <button class="cancel-button" onclick="closeEmailModal()">取消</button>
+        <button class="confirm-button" onclick="confirmSendEmail()">寄出</button>
+      </div>
+    </div>
+  </div>
+
+  <h2>線上開戶追蹤名單</h2>
+
+  <!-- 篩選區塊 -->
+  <div class="filter-section">
+    <label>分公司：
+      <select id="branchSelect">
+        <option value="無">未填分公司</option>
+        <option value="8000">台北</option>
+        <option value="8002">台中</option>
+        <option value="8003">台南</option>
+        <option value="8004">高雄</option>
+      </select>
+    </label>
+
+    <label>日期：
+      <input type="date" id="dateInput">
+    </label>
+  </div>
+
+  <!-- 操作按鈕 -->
+  <div class="action-buttons">
+    <div id="feedback" class="feedback-message"></div>
+    <button onclick="search()">查詢</button>
+    <button onclick="assignAE()">指派</button>
+    <button onclick="sendEmail()">寄送信件</button>
+  </div>
+
+
+  <div id="tableContainer"></div>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>

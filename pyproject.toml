@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "online-account-opening"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+packages = [{ include = "online_account_opening", from = "src" }]
+# 或如果你未來會有多個模組，也可以多包幾個
+
+[tool.poetry.dependencies]
+python = ">=3.12"
+pymysql = ">=1.1.1,<2.0.0"
+sqlalchemy = ">=2.0.40,<3.0.0"
+python-dotenv = ">=1.1.0,<2.0.0"
+fastapi = ">=0.115.12,<0.116.0"
+uvicorn = ">=0.34.0,<0.35.0"
+pandas = ">=2.2.3,<3.0.0"
+requests = "^2.32.3"
+
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
