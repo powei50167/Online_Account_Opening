@@ -26,6 +26,7 @@ class InboundOut(BaseModel):
     sales: Optional[str]
     assigned_sales: Optional[str]
     mail_status: str 
+    notes: Optional[str]
 
     class Config:
         from_attributes  = True
@@ -38,7 +39,8 @@ def read_inbounds(date: Optional[str] = None, db: Session = Depends(get_db)):
                 i2.`指派營業員` AS `歷史指派營業員`,
                 mt.寄件時間,
                 mt.回覆時間,
-                List_Type.type
+                List_Type.type,
+                i3.note
             FROM 
                 `Account Opening`.Inbound_list i1
             LEFT JOIN (
@@ -63,6 +65,17 @@ def read_inbounds(date: Optional[str] = None, db: Session = Depends(get_db)):
             ) mt ON i1.`案件編號` = mt.`案件編號`
             left join
 	            List_Type On  mt.項目 = List_Type.index
+            LEFT JOIN (
+                SELECT t.*
+                FROM (
+                    SELECT *,
+                        ROW_NUMBER() OVER (PARTITION BY case_number ORDER BY created_at  DESC) AS rn
+                    FROM `Account Opening`.Inbound_list_notes
+                    WHERE `note` IS NOT NULL
+                ) t
+                WHERE t.rn = 1
+            ) i3
+            ON i1.`案件編號` = i3.`case_number`
             WHERE 
                 STR_TO_DATE(i1.`紀錄日期`, '%Y/%c/%e') = STR_TO_DATE(:date, '%Y-%m-%d')
             ORDER BY 
@@ -89,7 +102,8 @@ def read_inbounds(date: Optional[str] = None, db: Session = Depends(get_db)):
                 else 
                 "已回覆" if row["回覆時間"] is not None 
                 else "待回覆"
-            )
+            ),
+            'notes':format_assigned_sales(row['note'])
         }
         for row in result
     ]
@@ -158,7 +172,8 @@ class branch_incomplete_Out(BaseModel):
     sales: str
     status: str
     mail_status: str
-    inputdate: str  
+    inputdate: str
+    notes: Optional[str]
 
 def is_valid_datetime(dt_str: Optional[str]) -> bool:
     if not dt_str or dt_str.strip().lower() == "nat":
@@ -185,7 +200,8 @@ def read_branch_incomplete(date: Optional[str] = None, branch: Optional[str] = N
             r.匯入時間,
             mt.寄件時間,
             mt.回覆時間,
-            List_Type.type
+            List_Type.type,
+            i3.note
         FROM (
             SELECT 
                 日期 as 紀錄日期,
@@ -213,6 +229,17 @@ def read_branch_incomplete(date: Optional[str] = None, branch: Optional[str] = N
             ) t
             WHERE t.rn = 1
         ) mt ON r.`案件編號` = mt.`案件編號`
+        LEFT JOIN (
+            SELECT t.*
+            FROM (
+                SELECT *,
+                    ROW_NUMBER() OVER (PARTITION BY case_number ORDER BY created_at  DESC) AS rn
+                FROM `Account Opening`.Inbound_list_notes
+                WHERE `note` IS NOT NULL
+            ) t
+            WHERE t.rn = 1
+        ) i3
+        ON r.`案件編號` = i3.`case_number`
         left join
             List_Type On  mt.項目 = List_Type.index
         WHERE r.rn = 1
@@ -247,7 +274,8 @@ def read_branch_incomplete(date: Optional[str] = None, branch: Optional[str] = N
                 else 
                 "已回覆" if row["回覆時間"] is not None 
                 else "待回覆"
-            )
+            ),
+            'notes':format_last_return_time(row['note'])
         }
         for row in result
     ]
@@ -362,12 +390,6 @@ def send_email(req: EmailRequest, type: str = None, db: Session = Depends(get_db
         logger.error(f"[例外錯誤] 發送失敗，錯誤訊息: {str(e)}")
         return {"message": "寄送失敗，發生例外錯誤"}
 
-class MailTrackingItem(BaseModel):
-    sent_date: datetime
-    selected_type: str
-    case_id: str
-    recipient: str
-
 def save_mail_tracking(db: Session, selected_type: str, case_id: str, recipient: str):
     try:
         sql = text("""
@@ -474,3 +496,30 @@ def read_inbounds(case_id: Optional[str] = None, db: Session = Depends(get_db)):
         }
         for row in result
     ]
+
+
+class noteRequest(BaseModel):
+    records: List[EmailRecordItem]
+    note: str  # 新增
+
+@router.post("/edit_note")
+def edit_note(req: noteRequest, db: Session = Depends(get_db)):
+    try:
+        for record in req.records:
+            sql = text("""
+                INSERT INTO `Account Opening`.Inbound_list_notes
+                (case_number, note)
+                VALUES (:case_id, :note)
+            """)
+            db.execute(sql, {
+                "case_id": record.case_id,
+                "note": req.note
+            })
+
+        db.commit()
+        logger.info(f"[追蹤記錄] 儲存成功：{record.case_id} -> {req.note}")
+
+    except Exception as e:
+        db.rollback()
+        logger.error(f"[例外錯誤] 備註編輯失敗，錯誤訊息: {str(e)}")
+        return {"message": "備註編輯失敗，發生例外錯誤"}

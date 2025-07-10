@@ -59,6 +59,7 @@
 
       <div class="modal-buttons">
         <button class="cancel-button" onclick="closeAssignModal()">取消</button>
+        <button onclick="transferBackToOriginalAE()">轉原AE</button>
         <button class="confirm-button" onclick="confirmAssign()">確定</button>
       </div>
     </div>
@@ -129,29 +130,45 @@
     </div>
   </div>
 
+  <!-- 編輯備註視窗（彈跳視窗形式） -->
+  <div id="editNoteOverlay"></div>
+
+  <!-- 編輯備註彈窗 -->
+  <div id="editNoteModal">
+    <h3>編輯備註</h3>
+    <textarea id="editNoteInput"></textarea><br><br>
+    <button id="saveNoteBtn">✅ 確定</button>
+    <button id="closeNoteBtn">取消</button>
+  </div>
+  
   <h2>線上開戶追蹤名單</h2>
 
   <!-- 篩選區塊 -->
   <div class="filter-section">
-    <label>分公司：
-      <select id="branchSelect">
-        <option value="無">未填分公司</option>
-        <option value="8000">台北</option>
-        <option value="8002">台中</option>
-        <option value="8003">台南</option>
-        <option value="8004">高雄</option>
-      </select>
-    </label>
-
-    <label>日期：
-      <input type="date" id="dateInput">
-    </label>
+    <div class="filter-left">
+      <label>分公司：
+        <select id="branchSelect">
+          <option value="無">未填分公司</option>
+          <option value="8000">台北</option>
+          <option value="8002">台中</option>
+          <option value="8003">台南</option>
+          <option value="8004">高雄</option>
+        </select>
+      </label>
+  
+      <label>日期：
+        <input type="date" id="dateInput">
+      </label>
+    </div>
+  
+    <div class="filter-right">
+      <button class="search-button" onclick="search()">查詢</button>
+    </div>
   </div>
 
   <!-- 操作按鈕 -->
   <div class="action-buttons">
     <div id="feedback" class="feedback-message"></div>
-    <button onclick="search()">查詢</button>
     <button onclick="assignAE()">指派</button>
     <button onclick="sendEmail()">寄送信件</button>
   </div>

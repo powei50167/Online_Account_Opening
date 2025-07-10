@@ -56,24 +56,24 @@ function search() {
           <th>序號</th>
           <th>選取</th>
           <th>登錄日期</th>
-          <th>案件編號</th>
           <th>客戶名稱</th>
           <th>手機號碼</th>
           <th>指派營業員</th>
           <th>信件狀態</th>
+          <th>備註</th>
         </tr>
       ` : `
         <tr>
           <th>序號</th>
           <th>選取</th>
           <th>登錄日期</th>
-          <th>案件編號</th>
           <th>客戶名稱</th>
           <th>手機號碼</th>
           <th>營業員</th>
           <th>通知補件時間</th>
           <th>狀態</th>
           <th>信件狀態</th>
+          <th>備註</th>
         </tr>
       `;
 
@@ -137,27 +137,36 @@ function search() {
         ${searchButton}
       </span>`;
 
+      const edit_notehButton = item.notes
+      ? `<button class="edit_note" title="編輯備註">✏️</button>`
+      : "";
+      const note_statusHTML = `
+      <span
+        <span class="status-icon-label"> ${item.notes}</span>
+        ${edit_notehButton}
+      </span>`;
+
         // 填入欄位
         tr.innerHTML = branchSelect === "無" ? `
           <td>${index + 1}</td>
           <td><input type="checkbox" name="selectRow" value="${item.case_id}"></td>
           <td class="${dateClass}">${item.register_date || ''}</td>
-          <td>${item.case_id}</td>
-          <td>${item.customer_name || ''}</td>
-          <td>${item.phone || ''}</td>
+          <td data-field="customer_name">${item.customer_name || ''}</td>
+          <td data-field="phone">${item.phone || ''}</td>
           <td>${item.assigned_sales || ''}</td>
           <td>${mail_statusHTML}</td>
+          <td>${note_statusHTML}</td>
         ` : `
           <td>${index + 1}</td>
           <td><input type="checkbox" name="selectRow" value="${item.case_id}"></td>
           <td class="${dateClass}">${item.register_date || ''}</td>
-          <td>${item.case_id}</td>
-          <td>${item.customer_name || ''}</td>
-          <td>${item.phone || ''}</td>
+          <td data-field="customer_name">${item.customer_name || ''}</td>
+          <td data-field="phone">${item.phone || ''}</td>
           <td>${item.sales || ''}</td>
           <td>${item.last_return_time || ''}</td>
           <td>${statusHTML}</td>
           <td>${mail_statusHTML}</td>
+          <td>${note_statusHTML}</td>
         `;
 
         tr.addEventListener('click', function (e) {
@@ -215,7 +224,7 @@ function assignAE() {
     });
 
   if (selectedRows.length === 0) {
-    alert("請先選取要指派的案件");
+    alert("請先選取案件");
     return;
   }
 
@@ -274,9 +283,8 @@ function confirmAssign() {
       const tr = document.querySelector(selector)?.closest('tr');
       let customer = "", phone = "";
       if (tr) {
-        const tds = tr.querySelectorAll('td');
-        customer = tds[4]?.innerText.trim() || "";
-        phone    = tds[5]?.innerText.trim() || "";
+        customer = tr.querySelector('[data-field="customer_name"]')?.innerText.trim() || "";
+        phone    = tr.querySelector('[data-field="phone"]')?.innerText.trim() || "";
       }
       return {
         case_id: rec.case_id,
@@ -286,7 +294,7 @@ function confirmAssign() {
       };
     });
     const recipient = document.getElementById("Recipient").value.trim();
-    const subject = "線上開戶未填公司及AE名單";
+    const subject = "線上開戶_自來客指派";
     const body = "請聯繫客戶確認是否有指定服務營業員，若沒有服務AE則為自來戶請協助客戶完成線上開戶，並回報進度，謝謝。";
 
     fetch(`/api/send-email?type=${encodeURIComponent('3')}`, {
@@ -455,12 +463,11 @@ function sendEmail() {
   const selectedRows = Array.from(document.querySelectorAll("input[name='selectRow']:checked"))
     .map(cb => {
       const tr = cb.closest('tr');
-      const tds = tr.querySelectorAll("td");
       return {
         case_id: cb.value,
         record_date: dateInput.value,
-        customer_name: tds[4]?.innerText.trim() || "",
-        phone: tds[5]?.innerText.trim() || ""
+        customer_name : tr.querySelector('[data-field="customer_name"]')?.innerText.trim() || "",
+        phone    : tr.querySelector('[data-field="phone"]')?.innerText.trim() || ""
       };
     });
 
@@ -497,7 +504,7 @@ function confirmSendEmail() {
   const subject = document.getElementById("emailSubject").value.trim();
   const body = document.getElementById("emailBody").value.trim();
   const selectedType = document.getElementById("emailTypeSelect").value;
-
+  console.log( window.selectedType)
 
   if (!recipient || !subject || !body) {
     alert("請完整填寫信件資訊");
@@ -642,4 +649,152 @@ document.addEventListener("keydown", function (event) {
       }
     });
   }
+});
+
+function transferBackToOriginalAE() {
+  const Recipient = document.getElementById("nameSelect").value.trim();
+  if (!Recipient) {
+    alert("請選擇營業員");
+    return;
+  }
+
+  fetch('/api/inbounds/assign', {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      records: window.selectedRecords,
+      sales: Recipient
+    })
+  })
+  .then(res => {
+    if (!res.ok) throw new Error("指派失敗");
+    return res.json();
+  })
+  .then(data => {
+    alert("✅ 指派成功！");
+    closeAssignModal();
+    search();
+
+    // ↓↓↓ 新增：指派成功後自動寄送「自來客_指派AE」郵件 ↓↓↓
+    const detailedRecords = window.selectedRecords.map(rec => {
+      // 利用案件編號去找當前 table 裡對應的 <tr>，並讀出客戶名稱與手機
+      const selector = `tr input[value="${rec.case_id}"]`; 
+      const tr = document.querySelector(selector)?.closest('tr');
+      let customer = "", phone = "";
+      if (tr) {
+        customer = tr.querySelector('[data-field="customer_name"]')?.innerText.trim() || "";
+        phone    = tr.querySelector('[data-field="phone"]')?.innerText.trim() || "";
+      }
+      return {
+        case_id: rec.case_id,
+        record_date: rec.record_date,
+        customer_name: customer,
+        phone: phone
+      };
+    });
+    const recipient = document.getElementById("Recipient").value.trim();
+    const subject = "線上開戶_自來客指派_轉回原AE";
+    const body = "您的客戶未填寫營業員，請聯繫客戶並協助完成線上開戶。";
+
+    fetch(`/api/send-email?type=${encodeURIComponent('4')}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        recipient, 
+        subject, 
+        body, 
+        records: detailedRecords   // 這裡帶入 customer_name 與 phone
+      })
+    })
+    .then(res2 => {
+      if (!res2.ok) throw new Error("自動寄信失敗");
+      return res2.json();
+    })
+    .then(emailData => {
+      alert("✅ 已自動寄送「自來客_指派AE」郵件");
+      search();  // 若要更新列表
+    })
+    .catch(err2 => {
+      console.error("自動寄信錯誤：", err2);
+      alert("❌ 自動寄送「自來客_指派AE」信件失敗：" + err2.message);
+    });
+  })
+  .catch(err => {
+    alert("❌ 指派失敗：" + err.message);
+  });
+}
+let currentNoteRecord = null; // 暫存目前選擇編輯的案件資訊
+
+// 編輯備註欄
+document.addEventListener("click", function (event) {
+  if (event.target.classList.contains("edit_note")) {
+    const row = event.target.closest("tr");
+    const caseId = row.querySelector("input[type='checkbox']")?.value;
+    const recordDate = dateInput.value; // 使用現有搜尋的日期
+
+    if (!caseId || !recordDate) {
+      alert("⚠️ 找不到案件編號或日期");
+      return;
+    }
+
+
+    // 儲存目前編輯的案件資訊
+    currentNoteRecord = {
+      case_id: caseId,
+      record_date: recordDate,
+    };
+
+    document.getElementById("editNoteModal").style.display = "block";
+  }
+});
+
+// 編輯備註欄_點擊「確定」按鈕
+document.getElementById("saveNoteBtn").addEventListener("click", function () {
+  const newNote = document.getElementById("editNoteInput").value.trim();
+  editNoteInput.value = "";
+
+  if (!currentNoteRecord) {
+    alert("⚠️ 找不到編輯的案件資料");
+    return;
+  }
+  // 檢查是否為空值
+  if (!newNote) {
+    alert("請輸入備註內容！");
+    return; 
+  }
+  // 呼叫後端 API
+  fetch('/api/edit_note', {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      records: [{
+        ...currentNoteRecord,
+        customer_name: "",
+        phone: "",
+      }],
+      note: newNote
+    })
+  })
+  .then(res => {
+    if (!res.ok) throw new Error("更新失敗");
+    return res.json();
+  })
+  .then(data => {
+    alert("✅ 備註更新成功");
+    document.getElementById("editNoteModal").style.display = "none";
+    search(); // 更新表格
+  })
+  .catch(err => {
+    console.error("編輯失敗：", err);
+    alert("❌ 更新備註失敗：" + err.message);
+  });
+});
+
+// 編輯備註欄_點擊「取消」按鈕
+document.getElementById("closeNoteBtn").addEventListener("click", function () {
+  document.getElementById("editNoteModal").style.display = "none";
 });

@@ -35,6 +35,18 @@ h2 {
   margin-bottom: 20px;
   box-shadow: 0 0 10px rgba(0,0,0,0.3);
   font-size: 18px;
+  display: flex;
+  justify-content: space-between; /* 左右分散 */
+  align-items: center;           /* 垂直置中 */
+}
+
+.filter-left {
+  display: flex;
+  gap: 20px; /* 左邊兩個欄位間距 */
+}
+
+.filter-right {
+  display: flex;
 }
 
 .filter-section label {
@@ -337,4 +349,64 @@ tr.selected {
 #feedback {
   font-size: 24px;
   font-weight: bold; 
+}
+
+.search-button {
+  background-color: #c0392b; /* 紅磚色 */
+}
+
+.search-button:hover {
+  background-color: #e74c3c; /* 滑鼠懸停時更亮一些，可選 */
+}
+
+/* 編輯備註彈窗 */
+/* 遮罩背景（可選） */
+#editNoteOverlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 9998;
+}
+
+/* 編輯備註彈窗 */
+#editNoteModal {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #2b2b3d;
+  border: 3px solid #000000;
+  padding: 20px;
+  width: 500px;
+  max-width: 90%;
+  z-index: 9999;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+}
+
+#editNoteModal h3 {
+  margin-top: 0;
+}
+
+#editNoteInput {
+  width: 100%;
+  height: 150px;
+  resize: vertical;
+}
+
+#saveNoteBtn {
+  margin-right: 10px;
+}
+
+.edit_note {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1em;
+  padding: 4px;
 }
