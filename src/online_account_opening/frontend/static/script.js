@@ -188,10 +188,11 @@ function search() {
         language: {
           url: "https://cdn.datatables.net/plug-ins/1.13.6/i18n/zh-HANT.json"
         },
-        order: [[2, "desc"]],
+        // order: [[2, "desc"]],
         columnDefs: [
           { orderable: false, targets: 1 } // 第二欄選取框不排序
-        ]
+        ],
+        pageLength: 25 
       });
     })
     .catch(error => {
@@ -725,8 +726,8 @@ function transferBackToOriginalAE() {
     alert("❌ 指派失敗：" + err.message);
   });
 }
-let currentNoteRecord = null; // 暫存目前選擇編輯的案件資訊
 
+let currentNoteRecord = null; // 暫存目前選擇編輯的案件資訊
 // 編輯備註欄
 document.addEventListener("click", function (event) {
   if (event.target.classList.contains("edit_note")) {

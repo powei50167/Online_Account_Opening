@@ -243,7 +243,7 @@ def read_branch_incomplete(date: Optional[str] = None, branch: Optional[str] = N
         left join
             List_Type On  mt.項目 = List_Type.index
         WHERE r.rn = 1
-        ORDER BY STR_TO_DATE(r.最後退補件時間, '%Y-%m-%d %H:%i:%s') DESC;
+        ORDER BY r.進件日期 DESC;
     """)
     result = db.execute(sql, {"date": date, "branch": branch}).mappings().fetchall()
 
@@ -311,8 +311,28 @@ def send_email(req: EmailRequest, type: str = None, db: Session = Depends(get_db
         logger.info(f"[寄送郵件] 開始處理，主旨: {req.subject}，收件人: {req.recipient}")
         
         for record in req.records:
-            # 使用 HTML 表格格式建立內容
-            # 合併內容：原本內文 + 表格
+            # 查詢主管
+            sql = text("""
+                SELECT extension
+                FROM pfcf.employee
+                WHERE emp_id = (
+                    SELECT sup_id
+                    FROM pfcf.employee
+                    WHERE extension = :recipient
+                )
+            """)
+            result = db.execute(sql, {"recipient": req.recipient}).fetchone()
+            supervisor_email = result[0] if result else None
+
+            if supervisor_email:
+                logger.info(f"[{req.recipient}] 找到主管 email: {supervisor_email}")
+            else:
+                logger.info(f"[{req.recipient}] 找不到主管 email 或主管資料")
+            
+            cc_list = ["YUANJIN@uni-psg.com", "HANHAN07@uni-psg.com"]
+            if supervisor_email:
+                cc_list.append(supervisor_email)
+
             body_content = f"""
                 <table width="650" cellpadding="0" cellspacing="0" border="0" style="font-family: Arial, sans-serif; color: #333333;">
                     <tr>
@@ -351,10 +371,10 @@ def send_email(req: EmailRequest, type: str = None, db: Session = Depends(get_db
                 </table>
             """
             inner_payload = {
-                "Subject": f'{req.subject}_{record.case_id}',
+                "Subject": f'{datetime.now().date()}_{req.subject}_{record.case_id}',
                 "From": "operation",
                 "To": [req.recipient],
-                "CC": ["YUANJIN@uni-psg.com","HANHAN07@uni-psg.com"],
+                "CC": cc_list,
                 "Bcc": None,
                 "Body": body_content,
                 "IsBodyHtml": True,
