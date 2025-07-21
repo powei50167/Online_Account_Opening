@@ -188,7 +188,6 @@ function search() {
         language: {
           url: "https://cdn.datatables.net/plug-ins/1.13.6/i18n/zh-HANT.json"
         },
-        // order: [[2, "desc"]],
         columnDefs: [
           { orderable: false, targets: 1 } // 第二欄選取框不排序
         ],
@@ -500,7 +499,7 @@ function closeEmailModal() {
   document.getElementById("mailsendModal").style.display = "none";
 }
 
-function confirmSendEmail() {
+function confirmSendEmail() { 
   const recipient = document.getElementById("emailRecipient").value.trim();
   const subject = document.getElementById("emailSubject").value.trim();
   const body = document.getElementById("emailBody").value.trim();

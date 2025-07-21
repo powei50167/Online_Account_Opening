@@ -145,7 +145,7 @@ class OrgItem(BaseModel):
 
 @router.get("/organization", response_model=List[OrgItem])
 def get_organization(db: Session = Depends(get_db)):
-    sql = text("SELECT * FROM pfcf.Organizational_VIEW where 部門 like '%期貨%' order by 部門")
+    sql = text("SELECT * FROM pfcf.Organizational_VIEW where 部門 like '%期貨%' order by 部門, 姓名")
     result = db.execute(sql).mappings().fetchall()
     
     return [
@@ -225,7 +225,7 @@ def read_branch_incomplete(date: Optional[str] = None, branch: Optional[str] = N
             FROM (
                 SELECT *,
                     ROW_NUMBER() OVER (PARTITION BY 案件編號 ORDER BY 寄件日期 DESC, mail_id DESC) AS rn
-                FROM `Account Opening`.Mail_Tracking where 寄件日期 is not null and 項目 <> 3
+                FROM `Account Opening`.Mail_Tracking where 寄件日期 is not null 
             ) t
             WHERE t.rn = 1
         ) mt ON r.`案件編號` = mt.`案件編號`
@@ -342,7 +342,7 @@ def send_email(req: EmailRequest, type: str = None, db: Session = Depends(get_db
                                 <h3 style="color: #2c3e50; border-bottom: 2px solid #eaeaea; padding-bottom: 8px; margin-bottom: 15px; text-align: center;">案件資訊</h3>
                                 <table width="100%" cellpadding="0" cellspacing="0" border="1" style="border-collapse: collapse; text-align: center; border: 1px solid #dddddd;">
                                     <tr style="background-color: #FFA07A;">
-                                        <th style="padding: 10px; border: 1px solid #dddddd;">進件日期</th>
+                                        <th style="padding: 10px; border: 1px solid #dddddd;">提醒日期</th>
                                         <th style="padding: 10px; border: 1px solid #dddddd;">案件編號</th>
                                         <th style="padding: 10px; border: 1px solid #dddddd;">客戶姓名</th>
                                         <th style="padding: 10px; border: 1px solid #dddddd;">客戶手機</th>
@@ -501,7 +501,8 @@ def read_inbounds(case_id: Optional[str] = None, db: Session = Depends(get_db)):
             pfcf.employee emp on mt.AE = emp.extension 
         left join
             List_Type On  mt.項目 = List_Type.index
-        where 案件編號 =:案件編號;
+        where 案件編號 =:案件編號
+        ORDER BY 寄件時間 DESC
     """)
     result = db.execute(sql, {"案件編號": case_id}).mappings().fetchall()
 
