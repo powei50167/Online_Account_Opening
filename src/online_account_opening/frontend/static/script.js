@@ -56,6 +56,7 @@ function search() {
           <th>序號</th>
           <th>選取</th>
           <th>登錄日期</th>
+          <th>案件編號</th>
           <th>客戶名稱</th>
           <th>手機號碼</th>
           <th>指派營業員</th>
@@ -67,6 +68,7 @@ function search() {
           <th>序號</th>
           <th>選取</th>
           <th>登錄日期</th>
+          <th>案件編號</th>
           <th>客戶名稱</th>
           <th>手機號碼</th>
           <th>營業員</th>
@@ -151,6 +153,7 @@ function search() {
           <td>${index + 1}</td>
           <td><input type="checkbox" name="selectRow" value="${item.case_id}"></td>
           <td class="${dateClass}">${item.register_date || ''}</td>
+          <td>${item.case_id || ''}</td>
           <td data-field="customer_name">${item.customer_name || ''}</td>
           <td data-field="phone">${item.phone || ''}</td>
           <td>${item.assigned_sales || ''}</td>
@@ -160,6 +163,7 @@ function search() {
           <td>${index + 1}</td>
           <td><input type="checkbox" name="selectRow" value="${item.case_id}"></td>
           <td class="${dateClass}">${item.register_date || ''}</td>
+          <td>${item.case_id || ''}</td>
           <td data-field="customer_name">${item.customer_name || ''}</td>
           <td data-field="phone">${item.phone || ''}</td>
           <td>${item.sales || ''}</td>
@@ -551,7 +555,7 @@ document.getElementById("emailTypeSelect").addEventListener("change", function (
         subjectInput.value = data[0].subject || '';
         bodyTextarea.value = data[0].content || '';
       } else {
-        alert("⚠️ 查無對應的信件範本");
+        alert("⚠️ 查無對應的信件範本，請自行輸入內文");
       }
     })
     .catch(err => {
