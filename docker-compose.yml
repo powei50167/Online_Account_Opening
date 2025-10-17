@@ -4,6 +4,7 @@ services:
   api:
     build: .
     container_name: online-account-api
+    restart: unless-stopped
     ports:
       - "8086:8086"
     env_file:
@@ -13,10 +14,10 @@ services:
     volumes:
       - ./src/online_account_opening/frontend/static:/app/frontend/static
       - ./src:/app/src
-      
+
     command: >
       sh -c "PYTHONPATH=src uvicorn online_account_opening.main:app --host 0.0.0.0 --port 8086 --reload"
-    restart: unless-stopped
+
 
   db:
     image: mysql:8.0

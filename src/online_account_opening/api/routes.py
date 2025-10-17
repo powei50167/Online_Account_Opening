@@ -315,7 +315,7 @@ def send_email(req: EmailRequest, type: str = None, db: Session = Depends(get_db
             sql = text("""
                 SELECT extension
                 FROM pfcf.employee
-                WHERE emp_id = (
+                WHERE emp_id in (
                     SELECT sup_id
                     FROM pfcf.employee
                     WHERE extension = :recipient
@@ -329,7 +329,7 @@ def send_email(req: EmailRequest, type: str = None, db: Session = Depends(get_db
             else:
                 logger.info(f"[{req.recipient}] 找不到主管 email 或主管資料")
             
-            cc_list = ["YUANJIN@uni-psg.com", "HANHAN07@uni-psg.com"]
+            cc_list = ["YUANJIN@uni-psg.com", "HANHAN07@uni-psg.com","JUDY5752@uni-psg.com","FLOWER780106@uni-psg.com","lvuing416@uni-psg.com","sunny.tai@uni-psg.com"]
             if supervisor_email:
                 cc_list.append(supervisor_email)
 
@@ -371,7 +371,7 @@ def send_email(req: EmailRequest, type: str = None, db: Session = Depends(get_db
                 </table>
             """
             inner_payload = {
-                "Subject": f'{datetime.now().date()}_{req.subject}_{record.case_id}',
+                "Subject": f'{req.subject}_{datetime.now().date()}_{record.case_id}',
                 "From": "operation",
                 "To": [req.recipient],
                 "CC": cc_list,
@@ -497,8 +497,10 @@ def read_inbounds(case_id: Optional[str] = None, db: Session = Depends(get_db)):
             回覆內容 
         FROM 
             `Account Opening`.Mail_Tracking mt
-        left join  
-            pfcf.employee emp on mt.AE = emp.extension 
+        LEFT JOIN (
+            SELECT distinct name, extension
+            FROM pfcf.employee
+        ) emp ON mt.AE = emp.extension
         left join
             List_Type On  mt.項目 = List_Type.index
         where 案件編號 =:案件編號

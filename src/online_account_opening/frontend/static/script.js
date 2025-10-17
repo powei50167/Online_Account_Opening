@@ -298,7 +298,7 @@ function confirmAssign() {
       };
     });
     const recipient = document.getElementById("Recipient").value.trim();
-    const subject = "線上開戶_自來客指派";
+    const subject = "【請電聯客戶】線上開戶_自來客指派，有疑問請詢問業務主管";
     const body = "請聯繫客戶確認是否有指定服務營業員，若沒有服務AE則為自來戶請協助客戶完成線上開戶，並回報進度，謝謝。";
 
     fetch(`/api/send-email?type=${encodeURIComponent('3')}`, {
