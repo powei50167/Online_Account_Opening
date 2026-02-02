@@ -34,52 +34,71 @@ class InboundOut(BaseModel):
 @router.get("/inbounds", response_model=List[InboundOut])
 def read_inbounds(date: Optional[str] = None, db: Session = Depends(get_db)):
     sql = text("""
-            SELECT 
-                i1.*,
-                i2.`指派營業員` AS `歷史指派營業員`,
-                mt.寄件時間,
-                mt.回覆時間,
-                List_Type.type,
-                i3.note
-            FROM 
-                `Account Opening`.Inbound_list i1
-            LEFT JOIN (
-                SELECT t.*
-                FROM (
-                    SELECT *,
-                        ROW_NUMBER() OVER (PARTITION BY 案件編號 ORDER BY STR_TO_DATE(`紀錄日期`, '%Y/%c/%e') DESC) AS rn
-                    FROM `Account Opening`.Inbound_list
-                    WHERE `指派營業員` IS NOT NULL
-                ) t
-                WHERE t.rn = 1
-            ) i2
-            ON i1.`案件編號` = i2.`案件編號`
-            LEFT JOIN (
-                SELECT *
-                FROM (
-                    SELECT *,
-                        ROW_NUMBER() OVER (PARTITION BY 案件編號 ORDER BY 寄件日期 DESC, mail_id DESC) AS rn
-                    FROM `Account Opening`.Mail_Tracking where 寄件日期 is not null
-                ) t
-                WHERE t.rn = 1
-            ) mt ON i1.`案件編號` = mt.`案件編號`
-            left join
-	            List_Type On  mt.項目 = List_Type.index
-            LEFT JOIN (
-                SELECT t.*
-                FROM (
-                    SELECT *,
-                        ROW_NUMBER() OVER (PARTITION BY case_number ORDER BY created_at  DESC) AS rn
-                    FROM `Account Opening`.Inbound_list_notes
-                    WHERE `note` IS NOT NULL
-                ) t
-                WHERE t.rn = 1
-            ) i3
-            ON i1.`案件編號` = i3.`case_number`
-            WHERE 
-                STR_TO_DATE(i1.`紀錄日期`, '%Y/%c/%e') = STR_TO_DATE(:date, '%Y-%m-%d')
-            ORDER BY 
-                STR_TO_DATE(i1.`登錄日期`, '%Y/%m/%d') DESC;
+        SELECT
+            adv.案件編號,
+            adv.分公司,
+            adv.登錄日期,
+            adv.狀態,
+            inb.指派營業員,
+            mt.寄件時間,
+            mt.回覆時間,
+            i3.note,
+            rl.客戶姓名 as 客戶名稱,
+            rl.手機號碼,
+            rl.營業員
+        FROM `Account Opening`.Account_DateRecords_VIEW adv
+        LEFT JOIN (
+        SELECT 案件編號, 指派營業員
+        FROM (
+            SELECT
+            案件編號,
+            指派營業員,
+            ROW_NUMBER() OVER (
+                PARTITION BY 案件編號
+                ORDER BY STR_TO_DATE(紀錄日期, '%Y/%c/%e') DESC
+            ) AS rn
+            FROM `Account Opening`.Inbound_list
+        ) t
+        WHERE rn = 1
+        ) inb
+        ON adv.案件編號 = inb.案件編號
+        LEFT JOIN (
+            SELECT *
+            FROM (
+                SELECT *,
+                    ROW_NUMBER() OVER (PARTITION BY 案件編號 ORDER BY 寄件日期 DESC, mail_id DESC) AS rn
+                FROM `Account Opening`.Mail_Tracking 
+            ) t
+            WHERE t.rn = 1
+        ) mt ON adv.`案件編號` = mt.`案件編號`
+        LEFT JOIN (
+            SELECT t.*
+            FROM (
+                SELECT *,
+                    ROW_NUMBER() OVER (PARTITION BY case_number ORDER BY created_at  DESC) AS rn
+                FROM `Account Opening`.Inbound_list_notes
+            ) t
+            WHERE t.rn = 1
+        ) i3 ON adv.`案件編號` = i3.`case_number`
+        LEFT JOIN (
+        SELECT 客戶姓名,案件編號,手機號碼,營業員
+        FROM (
+            SELECT
+            案件編號,
+            客戶姓名,
+            手機號碼,
+            營業員,
+            ROW_NUMBER() OVER (PARTITION BY 案件編號 ORDER BY 日期 DESC) AS rn
+            FROM `Account Opening`.Reminder_List
+        ) t
+        WHERE rn = 1
+        ) rl
+        ON adv.案件編號 = rl.案件編號
+        WHERE (adv.狀態 = '待審核' OR adv.狀態 = '送件中') 
+            and 分公司 = '-'
+            AND STR_TO_DATE(adv.`登錄日期`, '%Y/%m/%d') > DATE_SUB(STR_TO_DATE(:date, '%Y-%m-%d'), INTERVAL 45 DAY)
+        ORDER BY 
+            STR_TO_DATE(adv.`登錄日期`, '%Y/%m/%d') DESC;
     """)
     result = db.execute(sql, {"date": date}).mappings().fetchall()
 
@@ -90,13 +109,13 @@ def read_inbounds(date: Optional[str] = None, db: Session = Depends(get_db)):
     
     return [
         {
-            "record_date": row["紀錄日期"],
+            "record_date": row["登錄日期"],
             "case_id": row["案件編號"],
             "register_date": row["登錄日期"],
             "customer_name": row["客戶名稱"],
             "phone": row["手機號碼"],
             "sales": row["營業員"],
-            "assigned_sales": format_assigned_sales(row["歷史指派營業員"]),
+            "assigned_sales": format_assigned_sales(row["指派營業員"]),
             "mail_status": (
                 "未提醒" if row["寄件時間"] is None 
                 else 
@@ -120,10 +139,10 @@ class AssignRequest(BaseModel):
 def assign_sales(req: AssignRequest, db: Session = Depends(get_db)):
     for record in req.records:
         sql = text("""
-            UPDATE `Account Opening`.Inbound_list
-            SET `指派營業員` = :sales
-            WHERE `案件編號` = :case_id
-              AND STR_TO_DATE(`紀錄日期`, '%Y/%c/%e') = STR_TO_DATE(:record_date, '%Y-%m-%d')
+            INSERT INTO `Account Opening`.Inbound_list
+            (`紀錄日期`, `案件編號`, `指派營業員`)
+            VALUES
+            (:record_date, :case_id, :sales);
         """)
         db.execute(sql, {
             "sales": req.sales,
